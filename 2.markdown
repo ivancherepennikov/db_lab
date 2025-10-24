@@ -1,0 +1,72 @@
+## сортируем по средней цене на билет и классам полета с точки зрения пассажира
+```sql
+SELECT 
+    f.aircraft_code as самолет,
+    (ad.model->>'en') as модель,
+    tf.fare_conditions as класс,
+    ROUND(AVG(tf.amount), 2) as средняя_цена,
+    COUNT(*) as билетов
+FROM bookings.flights f
+JOIN bookings.ticket_flights tf ON f.flight_id = tf.flight_id
+JOIN bookings.aircrafts_data ad ON f.aircraft_code = ad.aircraft_code
+WHERE f.status = 'Arrived'
+GROUP BY f.aircraft_code, ad.model, tf.fare_conditions
+HAVING COUNT(*) > 10
+ORDER BY 
+    CASE 
+        WHEN tf.fare_conditions = 'Economy' THEN 1
+        WHEN tf.fare_conditions = 'Comfort' THEN 2
+        WHEN tf.fare_conditions = 'Business' THEN 3
+    END,
+    средняя_цена ASC
+LIMIT 15;
+```
+
+## терь тоже самое для компании
+```sql
+SELECT 
+    f.aircraft_code as самолет,
+    (ad.model->>'en') as модель,
+    tf.fare_conditions as класс,
+    ROUND(AVG(tf.amount), 2) as средняя_цена,
+    COUNT(*) as билетов
+FROM bookings.flights f
+JOIN bookings.ticket_flights tf ON f.flight_id = tf.flight_id
+JOIN bookings.aircrafts_data ad ON f.aircraft_code = ad.aircraft_code
+WHERE f.status = 'Arrived'
+GROUP BY f.aircraft_code, ad.model, tf.fare_conditions
+HAVING COUNT(*) > 10
+ORDER BY 
+    CASE 
+        WHEN tf.fare_conditions = 'Economy' THEN 1
+        WHEN tf.fare_conditions = 'Comfort' THEN 2
+        WHEN tf.fare_conditions = 'Business' THEN 3
+    END DESC,
+    средняя_цена DESC;
+```
+
+## рассчет цены за минуту
+```sql
+SELECT 
+    f.aircraft_code as самолет,
+    (ad.model->>'en') as модель,
+    tf.fare_conditions as класс,
+    ROUND(AVG(tf.amount), 2) as средняя_цена,
+    COUNT(*) as билетов,
+    ROUND(AVG(EXTRACT(EPOCH FROM r.duration) / 60), 2) as средняя_продолжительность_минут,
+    ROUND(AVG(tf.amount / NULLIF(EXTRACT(EPOCH FROM r.duration) / 60, 0)), 2) as цена_за_минуту
+FROM bookings.flights f
+JOIN bookings.ticket_flights tf ON f.flight_id = tf.flight_id
+JOIN bookings.aircrafts_data ad ON f.aircraft_code = ad.aircraft_code
+JOIN bookings.routes r ON f.flight_no = r.flight_no
+WHERE f.status = 'Arrived'
+GROUP BY f.aircraft_code, ad.model, tf.fare_conditions
+HAVING COUNT(*) > 10
+ORDER BY 
+    CASE 
+        WHEN tf.fare_conditions = 'Economy' THEN 1
+        WHEN tf.fare_conditions = 'Comfort' THEN 2
+        WHEN tf.fare_conditions = 'Business' THEN 3
+    END DESC,
+    средняя_цена DESC;
+```
