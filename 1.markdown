@@ -1,0 +1,28 @@
+## 1. Поиск пассажиров с фамилией IVANOV и их email
+```sql
+SELECT passenger_name, contact_data -> 'email' 
+FROM tickets
+WHERE passenger_name LIKE ('%IVANOV')
+```
+
+## Увеличение стоимости билетов на рейсы, запланированные на пиковые часы (с 7:00 до 10:00 и с 17:00 до 20:00) на 1000.
+```sql
+UPDATE bookings.ticket_flights tf
+SET amount = tf.amount + 1000
+FROM bookings.flights f
+WHERE tf.flight_id = f.flight_id
+AND (
+(f.scheduled_departure::time BETWEEN '07:00:00' AND '10:00:00')
+OR
+(f.scheduled_departure::time BETWEEN '17:00:00' AND '20:00:00')
+);
+```
+
+## Для каждой timezone - широта самого северного аэропорта.
+```sql
+SELECT timezone, 
+MAX(coordinates[1]) AS max_latitude
+FROM airports_data
+GROUP BY timezone
+ORDER BY timezone;
+```
